@@ -1,8 +1,8 @@
 package main
 
 import (
+	"commands"
 	"fmt"
-	"github.com/ImNotTwig/meww_go/src/commands"
 	"github.com/bwmarrin/discordgo"
 	"os"
 	"os/exec"
@@ -13,7 +13,7 @@ import (
 var println = fmt.Println
 
 func main() {
-	discord, err := discordgo.New("Bot " + "MTA0NDEyMjE3MDExODM4NTc3NQ.GPyIrN.vDPuHnwiI04lOCWIV1aCaViay8i7THhdZ-5EPY")
+	discord, err := discordgo.New("Bot " + "")
 	if err != nil {
 		println("Error creating Discord session,", err)
 		return

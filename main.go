@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"meww_go/commands"
 	"os"
 	"os/exec"
 	"os/signal"

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"commands"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"os"

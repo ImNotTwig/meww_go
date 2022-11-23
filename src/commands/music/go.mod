@@ -1,3 +1,3 @@
-module music
+module play_pause
 
 go 1.19

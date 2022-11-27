@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/zackradisic/soundcloud-api"
 	"github.com/zmb3/spotify/v2"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
 	"golang.org/x/oauth2/clientcredentials"
@@ -20,6 +21,7 @@ var SS = &clientcredentials.Config{
 	ClientSecret: config.ReadConfig().Tokens.Spotify_secret,
 	TokenURL:     spotifyauth.TokenURL,
 }
+var SoundCloud, _ = soundcloudapi.New(soundcloudapi.APIOptions{})
 
 var QueueDict = make(map[string]*queue.Queue)
 
@@ -130,6 +132,10 @@ func Play(s *discordgo.Session, message *discordgo.MessageCreate, song *string) 
 				current_pos++
 				track_list = append(track_list, track)
 			}
+		} else if err != nil {
+			log.Println(err)
+			s.ChannelMessageSend(message.ChannelID, "Could not get song(s) from given query.")
+			return
 		}
 	} else if strings.HasPrefix(*song, "https://open.spotify.com/playlist") {
 		tracks, err := client.GetPlaylistItems(context.Background(), spotify.ID(new_song))
@@ -143,6 +149,10 @@ func Play(s *discordgo.Session, message *discordgo.MessageCreate, song *string) 
 				current_pos++
 				track_list = append(track_list, track)
 			}
+		} else if err != nil {
+			log.Println(err)
+			s.ChannelMessageSend(message.ChannelID, "Could not get song(s) from given query.")
+			return
 		}
 	} else if strings.HasPrefix(*song, "https://open.spotify.com/track") {
 		tracks, err := client.GetTrack(context.Background(), spotify.ID(new_song))
@@ -154,8 +164,34 @@ func Play(s *discordgo.Session, message *discordgo.MessageCreate, song *string) 
 			track.Pos = current_pos + 1
 			current_pos++
 			track_list = append(track_list, track)
+		} else if err != nil {
+			log.Println(err)
+			s.ChannelMessageSend(message.ChannelID, "Could not get song(s) from given query.")
+			return
+		}
+	} else if strings.HasPrefix(*song, "https://soundcloud") {
+		split_url := strings.Split(*song, "/")
+		if split_url[4] == "sets" {
+			playlist_info, err := SoundCloud.GetPlaylistInfo(*song)
+			if err != nil {
+				log.Println(err)
+				s.ChannelMessageSend(message.ChannelID, "Could not get song(s) from given query.")
+				return
+			} else {
+				tracks := playlist_info.Tracks
+				current_pos := QueueDict[message.GuildID].CurrentPos()
+				for i := 0; i < len(tracks); i++ {
+					var track queue.Song
+					track.Title = tracks[i].Title
+					track.Url = &tracks[i].PermalinkURL
+					track.Pos = current_pos + 1
+					current_pos++
+					track_list = append(track_list, track)
+				}
+			}
 		}
 	}
+
 	var song_list []queue.Song
 	if len(track_list) == 0 {
 		song_list, err = queue.YtSearch(*song, *QueueDict[message.GuildID])

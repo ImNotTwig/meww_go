@@ -462,11 +462,16 @@ func (q Queue) GetStreamUrl(song Song) string {
 	var json_data map[string]interface{}
 	json.Unmarshal(out, &json_data)
 
-	requested_formats := json_data["requested_formats"].([]interface{})
+	if _, ok := json_data["requested_formats"]; ok {
 
-	format_we_want := requested_formats[1].(map[string]interface{})
+		requested_formats := json_data["requested_formats"].([]interface{})
 
-	return format_we_want["url"].(string)
+		format_we_want := requested_formats[1].(map[string]interface{})
+
+		return format_we_want["url"].(string)
+	} else {
+		return json_data["url"].(string)
+	}
 }
 
 func YtSearch(song string, queue Queue) ([]Song, error) {

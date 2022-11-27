@@ -13,6 +13,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/grafov/m3u8 v0.11.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jonas747/ogg v0.0.0-20161220051205-b4f6f4cf3757 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
@@ -27,6 +28,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
+	github.com/zackradisic/soundcloud-api v0.1.8 // indirect
 	github.com/zmb3/spotify/v2 v2.3.0 // indirect
 	golang.org/x/crypto v0.3.0 // indirect
 	golang.org/x/net v0.2.0 // indirect

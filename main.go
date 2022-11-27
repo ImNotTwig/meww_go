@@ -2,49 +2,78 @@ package main
 
 import (
 	"fmt"
-	"github.com/bwmarrin/discordgo"
-	"meww_go/commands"
+	"meww_go/command_parsing"
+	"meww_go/commands/music"
+	"meww_go/config"
 	"os"
-	"os/exec"
 	"os/signal"
 	"syscall"
+	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 var println = fmt.Println
+var bot_config = config.ReadConfig()
 
 func main() {
-	discord, err := discordgo.New("Bot " + "")
-	if err != nil {
-		println("Error creating Discord session,", err)
-		return
-	}
-
-	out, err := exec.Command("yt-dlp", "-N", "64", "--no-download", "--flat-playlist", "-J", "--downloader", "aria2c", "https://music.youtube.com/playlist?list=OLAK5uy_ntb7UL7aPoMsaM0Q0vgmRQl2lIsH__kFk").Output()
+	discordgo.Logger = nil
+	dg, err := discordgo.New("Bot " + bot_config.Tokens.Discord_token)
 
 	if err != nil {
-		println("Error:", err)
-		return
+		panic(err)
 	}
-	output := string(out[:])
-	println(output)
 
-	// adding a message create handler
-	discord.AddHandler(messageCreate)
+	dg.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentsGuilds | discordgo.IntentsGuildVoiceStates | discordgo.IntentsMessageContent
 
-	discord.Identify.Intents = discordgo.IntentsGuildMessages
+	dg.AddHandler(messageCreate)
+	dg.AddHandler(func(s *discordgo.Session, evt *discordgo.Ready) {
+		println("Logged in as " + s.State.User.Username + "#" + s.State.User.Discriminator)
+		dg.UpdateListeningStatus("~help")
+	})
+	guild_timer_map := make(map[string]int)
+	dg.AddHandler(func(s *discordgo.Session, evt *discordgo.VoiceStateUpdate) {
+		if _, ok := guild_timer_map[evt.GuildID]; ok {
+			guild_timer_map[evt.GuildID] = 0
+		}
+		guild, _ := dg.State.Guild(evt.GuildID)
+		in_vc := false
+		for i := 0; i < len(guild.VoiceStates); i++ {
+			if guild.VoiceStates[i].UserID == dg.State.User.ID {
+				in_vc = true
+				break
+			}
+		}
+		if in_vc == false {
+			return
+		}
+		for len(guild.VoiceStates) < 2 {
+			guild_timer_map[evt.GuildID] += 1
+			time.Sleep(time.Duration(1))
+			if guild_timer_map[evt.GuildID] == 30 {
+				music.QueueDict[evt.GuildID].FuckOff()
+				break
+			}
+		}
+	})
 
-	err = discord.Open()
+	err = dg.Open()
 	if err != nil {
-		println("Error opening connection,", err)
-		return
+		panic(err)
 	}
 
-	println("Connected to discord as:", discord.State.User.Username)
 	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
-	println("\nClosing connection to Discord.")
-	discord.Close()
+
+	if dg.VoiceConnections != nil {
+		for _, val := range dg.VoiceConnections {
+			if val != nil {
+				val.Disconnect()
+			}
+		}
+	}
+	dg.Close()
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -52,11 +81,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-	if m.Content == "ping" {
-		s.ChannelMessageSend(m.ChannelID, "Pong!")
-	}
 
-	if m.Content == "pong" {
-		s.ChannelMessageSend(m.ChannelID, "Ping!")
-	}
+	parsed_command := command_parsing.ParseCommand(m)
+	command_parsing.HandleCommand(s, m, parsed_command)
 }

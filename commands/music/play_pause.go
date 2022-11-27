@@ -2,6 +2,7 @@ package music
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"meww_go/config"
 	"meww_go/queue"
@@ -123,7 +124,7 @@ func Play(s *discordgo.Session, message *discordgo.MessageCreate, song *string) 
 			current_pos := QueueDict[message.GuildID].CurrentPos()
 			for i := 0; i < len(tracks.Tracks.Tracks); i++ {
 				var track queue.Song
-				track.Title = tracks.Tracks.Tracks[i].Name
+				track.Title = fmt.Sprintf("%v - %v", tracks.Tracks.Tracks[i].Name, tracks.Artists[0].Name)
 				track.Duration = strconv.Itoa(tracks.Tracks.Tracks[i].Duration / 1000)
 				track.Pos = current_pos + 1
 				current_pos++
@@ -136,7 +137,7 @@ func Play(s *discordgo.Session, message *discordgo.MessageCreate, song *string) 
 			current_pos := QueueDict[message.GuildID].CurrentPos()
 			for i := 0; i < len(tracks.Items); i++ {
 				var track queue.Song
-				track.Title = tracks.Items[i].Track.Track.Name
+				track.Title = fmt.Sprintf("%v - %v", tracks.Items[i].Track.Track.Name, tracks.Items[i].Track.Track.Artists[0].Name)
 				track.Duration = strconv.Itoa(tracks.Items[i].Track.Track.Duration / 1000)
 				track.Pos = current_pos + 1
 				current_pos++
@@ -148,7 +149,7 @@ func Play(s *discordgo.Session, message *discordgo.MessageCreate, song *string) 
 		current_pos := QueueDict[message.GuildID].CurrentPos()
 		if err == nil {
 			var track queue.Song
-			track.Title = tracks.Name
+			track.Title = fmt.Sprintf("%v - %v", tracks.Name, tracks.Artists[0].Name)
 			track.Duration = strconv.Itoa(tracks.Duration / 1000)
 			track.Pos = current_pos + 1
 			current_pos++

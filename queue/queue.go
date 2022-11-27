@@ -18,7 +18,7 @@ type Song struct {
 	Title    string
 	Url      *string
 	Pos      int
-	Duration string
+	Duration *string
 }
 
 type Queue struct {
@@ -137,7 +137,11 @@ func (q Queue) CurrentTime() string {
 
 func (q Queue) TotalTime() string {
 	if q.stream != nil {
-		return q.Current().Duration
+		if q.Current().Duration != nil {
+			return *q.Current().Duration
+		} else {
+			return "0s"
+		}
 	}
 	return "0s"
 }
@@ -418,7 +422,7 @@ func (q *Queue) Play() {
 		encodingOptions.RawOutput = true
 		encodingOptions.Bitrate = 256
 		encodingOptions.Application = "lowdelay"
-		encodingSession, err := dca.EncodeFile(q.GetStreamUrl(q.Current()), encodingOptions)
+		encodingSession, err := dca.EncodeFile(q.GetStreamUrl(&q.songs[q.current_pos-1]), encodingOptions)
 
 		if err != nil {
 			return
@@ -440,7 +444,7 @@ func (q *Queue) Play() {
 	}
 }
 
-func (q Queue) GetStreamUrl(song Song) string {
+func (q Queue) GetStreamUrl(song *Song) string {
 	if song.Url == nil {
 		song_list, err := YtSearch(song.Title, q)
 		if err != nil {
@@ -465,9 +469,12 @@ func (q Queue) GetStreamUrl(song Song) string {
 	if _, ok := json_data["requested_formats"]; ok {
 
 		requested_formats := json_data["requested_formats"].([]interface{})
-
-		format_we_want := requested_formats[1].(map[string]interface{})
-
+		var format_we_want map[string]interface{}
+		if len(requested_formats) < 2 {
+			format_we_want = requested_formats[0].(map[string]interface{})
+		} else {
+			format_we_want = requested_formats[1].(map[string]interface{})
+		}
 		return format_we_want["url"].(string)
 	} else {
 		return json_data["url"].(string)
@@ -533,9 +540,12 @@ func YtSearch(song string, queue Queue) ([]Song, error) {
 			new_url := strings.TrimSuffix(entry["url"].(string), "#__youtubedl_smuggle=%7B%22is_music_url%22%3A+true%7D")
 			song.Url = &new_url
 			song.Pos = queue.Len() + i + 1
-			duration := entry["duration"].(float64)
-			seconds, _ := time.ParseDuration(fmt.Sprintf("%v", duration) + "s")
-			song.Duration = seconds.String()
+			if _, ok := json_data["duration"]; ok {
+				duration := entry["duration"].(float64)
+				seconds, _ := time.ParseDuration(fmt.Sprintf("%v", duration) + "s")
+				duration_string := seconds.String()
+				song.Duration = &duration_string
+			}
 			song_list = append(song_list, song)
 		}
 	} else {
@@ -544,9 +554,12 @@ func YtSearch(song string, queue Queue) ([]Song, error) {
 		new_url := strings.TrimSuffix(json_data["webpage_url"].(string), "#__youtubedl_smuggle=%7B%22is_music_url%22%3A+true%7D")
 		song.Url = &new_url
 		song.Pos = queue.Len() + i
-		duration := json_data["duration"].(float64)
-		seconds, _ := time.ParseDuration(fmt.Sprintf("%v", duration) + "s")
-		song.Duration = seconds.String()
+		if _, ok := json_data["duration"]; ok {
+			duration := json_data["duration"].(float64)
+			seconds, _ := time.ParseDuration(fmt.Sprintf("%v", duration) + "s")
+			duration_string := seconds.String()
+			song.Duration = &duration_string
+		}
 		song_list = append(song_list, song)
 	}
 

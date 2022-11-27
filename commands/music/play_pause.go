@@ -127,7 +127,8 @@ func Play(s *discordgo.Session, message *discordgo.MessageCreate, song *string) 
 			for i := 0; i < len(tracks.Tracks.Tracks); i++ {
 				var track queue.Song
 				track.Title = fmt.Sprintf("%v - %v", tracks.Tracks.Tracks[i].Name, tracks.Artists[0].Name)
-				track.Duration = strconv.Itoa(tracks.Tracks.Tracks[i].Duration / 1000)
+				duration := strconv.Itoa(tracks.Tracks.Tracks[i].Duration / 1000)
+				track.Duration = &duration
 				track.Pos = current_pos + 1
 				current_pos++
 				track_list = append(track_list, track)
@@ -144,7 +145,8 @@ func Play(s *discordgo.Session, message *discordgo.MessageCreate, song *string) 
 			for i := 0; i < len(tracks.Items); i++ {
 				var track queue.Song
 				track.Title = fmt.Sprintf("%v - %v", tracks.Items[i].Track.Track.Name, tracks.Items[i].Track.Track.Artists[0].Name)
-				track.Duration = strconv.Itoa(tracks.Items[i].Track.Track.Duration / 1000)
+				duration := strconv.Itoa(tracks.Items[i].Track.Track.Duration / 1000)
+				track.Duration = &duration
 				track.Pos = current_pos + 1
 				current_pos++
 				track_list = append(track_list, track)
@@ -160,7 +162,8 @@ func Play(s *discordgo.Session, message *discordgo.MessageCreate, song *string) 
 		if err == nil {
 			var track queue.Song
 			track.Title = fmt.Sprintf("%v - %v", tracks.Name, tracks.Artists[0].Name)
-			track.Duration = strconv.Itoa(tracks.Duration / 1000)
+			duration := strconv.Itoa(tracks.Duration / 1000)
+			track.Duration = &duration
 			track.Pos = current_pos + 1
 			current_pos++
 			track_list = append(track_list, track)

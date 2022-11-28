@@ -1,9 +1,11 @@
 package command_parsing
 
 import (
-	"github.com/bwmarrin/discordgo"
+	"meww_go/commands/moderation"
 	"meww_go/commands/music"
 	"meww_go/commands/utility"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 type Command struct {
@@ -108,8 +110,8 @@ syntax: ~shuffle`,
 			command_group: "MusicCommands",
 		},
 		{
-			names: []string{"lyrics", "lyric"},
-			// needs command
+			names:   []string{"lyrics", "lyric"},
+			command: music.Lyrics,
 			help_message: `Show lyrics of the given song, if no song is given it checks the queue for the currently playing song.
 syntax: ~lyrics <song>`,
 			command_group: "MusicCommands",
@@ -122,6 +124,29 @@ syntax: ~lyrics <song>`,
 			help_message: `Sets a prefix for this server, if you use this command again you have to use the new prefix
 syntax: ~prefix <new prefix>`,
 			command_group: "Utility",
+		},
+
+		// Moderation Commands
+		{
+			names:   []string{"kick"},
+			command: moderation.Kick,
+			help_message: `Kicks a user from the server. You can supply a reason of why the user was kicked, but it is optional.
+syntax: ~kick <user> <reason>`,
+			command_group: "Moderation",
+		},
+		{
+			names:   []string{"ban"},
+			command: moderation.Ban,
+			help_message: `Bans a user from the server. You can supply a reason of why the user was banned, but it is optional.
+syntax: ~ban <user> <reason>`,
+			command_group: "Moderation",
+		},
+		{
+			names:   []string{"unban"},
+			command: moderation.UnBan,
+			help_message: `Unbans a user from the server.
+syntax: ~unban <user>`,
+			command_group: "Moderation",
 		},
 	}
 )

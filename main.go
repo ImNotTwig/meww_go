@@ -24,16 +24,18 @@ func main() {
 		panic(err)
 	}
 
-	dg.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentsGuilds | discordgo.IntentsGuildVoiceStates | discordgo.IntentsMessageContent
+	dg.Identify.Intents = discordgo.IntentsAll
 
 	dg.AddHandler(messageCreate)
+
 	dg.AddHandler(func(s *discordgo.Session, evt *discordgo.Ready) {
 		println("Logged in as " + s.State.User.Username + "#" + s.State.User.Discriminator)
 		dg.UpdateListeningStatus("~help")
 	})
+
 	guild_timer_map := make(map[string]int)
 	dg.AddHandler(func(s *discordgo.Session, evt *discordgo.VoiceStateUpdate) {
-		if _, ok := guild_timer_map[evt.GuildID]; ok {
+		if _, ok := guild_timer_map[evt.GuildID]; !ok {
 			guild_timer_map[evt.GuildID] = 0
 		}
 		guild, _ := dg.State.Guild(evt.GuildID)
@@ -47,12 +49,15 @@ func main() {
 		if in_vc == false {
 			return
 		}
-		for len(guild.VoiceStates) < 2 {
-			guild_timer_map[evt.GuildID] += 1
-			time.Sleep(time.Duration(1))
+		for guild_timer_map[evt.GuildID] = 0; len(guild.VoiceStates) < 2; guild_timer_map[evt.GuildID] += 1 {
+			time.Sleep(time.Duration(1 * time.Second))
 			if guild_timer_map[evt.GuildID] == 30 {
 				music.QueueDict[evt.GuildID].FuckOff()
 				break
+			}
+			if len(guild.VoiceStates) >= 2 {
+				guild_timer_map[evt.GuildID] = 0
+				return
 			}
 		}
 	})

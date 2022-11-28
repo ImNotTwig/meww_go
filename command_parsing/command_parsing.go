@@ -2,8 +2,8 @@ package command_parsing
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"meww_go/config"
+	"os"
 	"strings"
 	"unicode/utf8"
 
@@ -24,12 +24,12 @@ var empty_command = ParsedCommand{
 
 func ParseCommand(m *discordgo.MessageCreate) *ParsedCommand {
 
-	prefixes_file, _ := ioutil.ReadFile("./command_parsing/server_prefixes.json")
+	prefixes_file, _ := os.ReadFile("./command_parsing/server_prefixes.json")
 	prefix := config.ReadConfig().Prefix
 	var prefixes_map map[string]string
 	err := json.Unmarshal(prefixes_file, &prefixes_map)
 	if err == nil {
-		if value, ok := prefixes_map[m.GuildID]; ok == true {
+		if value, ok := prefixes_map[m.GuildID]; ok {
 			prefix = value
 		}
 	}
@@ -72,7 +72,7 @@ func HandleCommand(s *discordgo.Session, msg *discordgo.MessageCreate, command *
 			break
 		}
 	}
-	if has_command == false && command.IsCommand == true {
+	if !has_command && command.IsCommand {
 		s.ChannelMessageSendComplex(
 			msg.ChannelID, &discordgo.MessageSend{
 				Content:         "The command " + command.Command + " could not be found.",

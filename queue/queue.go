@@ -22,54 +22,54 @@ type Song struct {
 }
 
 type Queue struct {
-	songs                 []Song
-	current_pos           int
-	voice                 *discordgo.VoiceConnection
-	session               *discordgo.Session
-	message               *discordgo.MessageCreate
-	stream                *dca.StreamingSession
-	encoding_session      *dca.EncodeSession
-	loop                  bool
-	shuffle               bool
-	already_played_tracks []int
-	end_of_queue          bool
-	paused                bool
+	Songs                 []Song
+	Current_Pos           int
+	Voice                 *discordgo.VoiceConnection
+	Session               *discordgo.Session
+	Message               *discordgo.MessageCreate
+	Stream                *dca.StreamingSession
+	Encoding_Session      *dca.EncodeSession
+	Loop                  bool
+	Shuffle               bool
+	Already_Played_Tracks []int
+	End_Of_Queue          bool
+	Paused                bool
 }
 
 func NewQueue(s *discordgo.Session, m *discordgo.MessageCreate) *Queue {
 	return &Queue{
-		songs:                 make([]Song, 0),
-		current_pos:           0,
-		session:               s,
-		message:               m,
-		loop:                  false,
-		shuffle:               false,
-		already_played_tracks: make([]int, 0),
-		end_of_queue:          false,
-		paused:                false,
+		Songs:                 make([]Song, 0),
+		Current_Pos:           0,
+		Session:               s,
+		Message:               m,
+		Loop:                  false,
+		Shuffle:               false,
+		Already_Played_Tracks: make([]int, 0),
+		End_Of_Queue:          false,
+		Paused:                false,
 	}
 }
 
 func (q *Queue) SetVoice(v *discordgo.VoiceConnection) {
-	q.voice = v
+	q.Voice = v
 }
 
-func (q Queue) GetVoice() *discordgo.VoiceConnection {
-	return q.voice
+func (q *Queue) SetMessageChannel(m *discordgo.MessageCreate) {
+	q.Message = m
 }
 
 func (q *Queue) CheckPlaying() {
-	if q.Paused() {
+	if q.Paused {
 		if q.DoesStreamExist() {
 			return
-		} else if q.DoesStreamExist() == false {
+		} else if !q.DoesStreamExist() {
 			q.Shift()
 			if q.DoesStreamExist() {
 				q.UnpauseQuiet()
 				return
 			}
 
-		} else if q.EndOfQueue() {
+		} else if q.End_Of_Queue {
 			q.MoveToQuiet(q.Len())
 			if q.DoesStreamExist() {
 				q.UnpauseQuiet()
@@ -80,20 +80,20 @@ func (q *Queue) CheckPlaying() {
 }
 
 func (q *Queue) Enqueue(song Song) {
-	q.songs = append(q.songs, song)
+	q.Songs = append(q.Songs, song)
 }
 
 func (q *Queue) Remove(index int) {
-	if index-1 == q.current_pos {
-		q.session.ChannelMessageSend(q.message.ChannelID, "You cannot remove the currently playing song.")
+	if index-1 == q.Current_Pos {
+		q.Session.ChannelMessageSend(q.Message.ChannelID, "You cannot remove the currently playing song.")
 		return
 	}
-	q.songs = append(q.songs[:index-1], q.songs[index:]...)
+	q.Songs = append(q.Songs[:index-1], q.Songs[index:]...)
 	q.ValidateSongPos()
 }
 
 func (q Queue) DoesStreamExist() bool {
-	if q.stream != nil {
+	if q.Stream != nil {
 		return true
 	} else {
 		return false
@@ -101,34 +101,26 @@ func (q Queue) DoesStreamExist() bool {
 }
 
 func (q *Queue) Insert(song Song, index int) {
-	if len(q.songs) == index {
-		q.songs = append(q.songs, song)
+	if len(q.Songs) == index {
+		q.Songs = append(q.Songs, song)
 	}
-	q.songs = append(q.songs[:index+1], q.songs[index:]...)
-	q.songs[index] = song
+	q.Songs = append(q.Songs[:index+1], q.Songs[index:]...)
+	q.Songs[index] = song
 }
 
 func (q *Queue) ValidateSongPos() {
 	for i := 0; i < q.Len(); i++ {
-		q.songs[i].Pos = i + 1
+		q.Songs[i].Pos = i + 1
 	}
 }
 
-func (q Queue) GetSongs() []Song {
-	return q.songs
-}
-
-func (q Queue) CurrentPos() int {
-	return q.current_pos
-}
-
 func (q Queue) Len() int {
-	return len(q.songs)
+	return len(q.Songs)
 }
 
 func (q Queue) CurrentTime() string {
-	if q.stream != nil {
-		string_time := q.stream.PlaybackPosition().String()
+	if q.Stream != nil {
+		string_time := q.Stream.PlaybackPosition().String()
 		minutes_and_seconds := strings.Split(string_time, ".")[0]
 		return minutes_and_seconds + "s"
 	}
@@ -136,7 +128,7 @@ func (q Queue) CurrentTime() string {
 }
 
 func (q Queue) TotalTime() string {
-	if q.stream != nil {
+	if q.Stream != nil {
 		if q.Current().Duration != nil {
 			return *q.Current().Duration
 		} else {
@@ -147,90 +139,91 @@ func (q Queue) TotalTime() string {
 }
 
 func (q Queue) Current() Song {
-	return q.songs[q.current_pos-1]
+	return q.Songs[q.Current_Pos-1]
 }
 
 func (q *Queue) FuckOff() {
-	q.songs = make([]Song, 0)
-	if q.stream != nil && q.encoding_session != nil {
-		q.stream.SetPaused(true)
-		q.encoding_session.Stop()
+	q.Songs = make([]Song, 0)
+	if q.Stream != nil && q.Encoding_Session != nil {
+		q.Stream.SetPaused(true)
+		q.Encoding_Session.Stop()
 	}
-	q.current_pos = 0
-	if q.voice != nil {
-		q.session.ChannelMessageSend(q.message.ChannelID, "The bot has left the voice channel, and the queue has been cleared.")
+	q.Current_Pos = 0
+	if q.Voice != nil {
+		q.Session.ChannelMessageSend(q.Message.ChannelID, "The bot has left the Voice channel, and the queue has been cleared.")
 	}
-	q.voice.Disconnect()
+	q.Voice.Disconnect()
 }
 
 func (q *Queue) MoveTo(index int) {
-	q.current_pos = index - 1
-	if q.stream != nil && q.encoding_session != nil {
-		q.stream.SetPaused(true)
-		q.encoding_session.Stop()
+	q.Current_Pos = index - 1
+	if q.Stream != nil && q.Encoding_Session != nil {
+		q.Stream.SetPaused(true)
+		q.Encoding_Session.Stop()
 	}
-	q.session.ChannelMessageSend(q.message.ChannelID, "Moved to "+strconv.Itoa(index)+" in the queue.")
-	q.end_of_queue = false
-	q.paused = false
+	q.Session.ChannelMessageSend(q.Message.ChannelID, "Moved to "+strconv.Itoa(index)+" in the queue.")
+	q.End_Of_Queue = false
+	q.Paused = false
 	defer q.Shift()
 }
 
 func (q *Queue) MoveToQuiet(index int) {
-	q.current_pos = index
-	if q.stream != nil && q.encoding_session != nil {
-		q.stream.SetPaused(true)
-		q.encoding_session.Stop()
+	q.Current_Pos = index
+	if q.Stream != nil && q.Encoding_Session != nil {
+		q.Stream.SetPaused(true)
+		q.Encoding_Session.Stop()
 	}
-	q.end_of_queue = false
-	q.paused = false
+	q.End_Of_Queue = false
+	q.Paused = false
 	defer q.Play()
 }
 
 func (q *Queue) Clear() {
-	q.songs = make([]Song, 0)
-	q.stream.SetPaused(true)
-	q.encoding_session.Stop()
-	q.session.ChannelMessageSend(q.message.ChannelID, "The queue has been cleared, and the player has stopped.")
-	q.current_pos = 0
+	q.Songs = make([]Song, 0)
+	q.Stream.SetPaused(true)
+	q.Encoding_Session.Stop()
+	q.Session.ChannelMessageSend(q.Message.ChannelID, "The queue has been cleared, and the player has stopped.")
+	q.Current_Pos = 0
 }
 
 func (q *Queue) Shift() {
-	q.end_of_queue = false
-	if q.shuffle == false {
+	q.End_Of_Queue = false
+	if !q.Shuffle {
 		q.CancelSong()
-		q.current_pos += 1
+		q.Current_Pos += 1
 	} else {
 		q.CancelSong()
-		old_pos := q.current_pos
-		q.current_pos = rand.Intn(q.Len()) + 1
+		old_pos := q.Current_Pos
+		q.Current_Pos = rand.Intn(q.Len()) + 1
 
-		for contains(q.already_played_tracks, q.current_pos) && q.current_pos != old_pos {
-			q.current_pos = rand.Intn(q.Len()) + 1
+		for contains(q.Already_Played_Tracks, q.Current_Pos) && q.Current_Pos != old_pos {
+			q.Current_Pos = rand.Intn(q.Len()) + 1
 		}
 
-		if len(q.already_played_tracks) == q.Len() {
-			q.session.ChannelMessageSend(q.message.ChannelID, "Every song in the queue has been played, shuffle has been turned off.")
-			q.encoding_session.Stop()
+		if len(q.Already_Played_Tracks) == q.Len() {
+			q.Session.ChannelMessageSend(q.Message.ChannelID, "Every song in the queue has been played, Shuffle has been turned off.")
+			q.Encoding_Session.Stop()
 		}
-		q.already_played_tracks = append(q.already_played_tracks, old_pos)
+		q.Already_Played_Tracks = append(q.Already_Played_Tracks, old_pos)
 	}
 
-	if q.Len() < q.current_pos {
-		q.end_of_queue = true
+	if q.Len() < q.Current_Pos {
+		q.End_Of_Queue = true
 	}
-
+	q.Paused = false
 	defer q.Play()
 }
 
 func (q *Queue) CancelSong() {
-	if q.stream != nil {
-		q.stream.SetPaused(true)
+	if q.Stream != nil {
+		q.Stream.SetPaused(true)
 	}
-	if q.encoding_session != nil {
-		q.encoding_session.Stop()
+	if q.Encoding_Session != nil {
+		q.Encoding_Session.Stop()
 	}
-	q.stream = nil
-	q.encoding_session = nil
+	q.Stream = nil
+	q.Encoding_Session = nil
+	q.Paused = true
 }
 
 func contains(s []int, i int) bool {
@@ -243,186 +236,169 @@ func contains(s []int, i int) bool {
 	return false
 }
 
-func (q Queue) IsPlaying() bool {
-	if q.paused == false {
-		return true
-	}
-	return false
-}
-
 func (q *Queue) Pause() {
-	if q.stream != nil && q.encoding_session != nil {
-		q.stream.SetPaused(true)
-		q.session.ChannelMessageSend(q.message.ChannelID, "Paused the queue.")
+	if q.Stream != nil && q.Encoding_Session != nil {
+		q.Stream.SetPaused(true)
+		q.Session.ChannelMessageSend(q.Message.ChannelID, "Paused the queue.")
 	}
-	q.paused = true
+	q.Paused = true
 }
 
 func (q *Queue) UnpauseQuiet() {
-	if q.stream != nil && q.encoding_session != nil {
-		q.stream.SetPaused(false)
+	if q.Stream != nil && q.Encoding_Session != nil {
+		q.Stream.SetPaused(false)
 
-		q.end_of_queue = false
+		q.End_Of_Queue = false
 	}
-	q.paused = false
+	q.Paused = false
 }
 
 func (q *Queue) PauseQuiet() {
-	if q.stream != nil && q.encoding_session != nil {
-		q.stream.SetPaused(true)
-		q.end_of_queue = true
+	if q.Stream != nil && q.Encoding_Session != nil {
+		q.Stream.SetPaused(true)
+		q.End_Of_Queue = true
 	}
-	q.paused = true
+	q.Paused = true
 }
 
 func (q *Queue) Unpause() {
-	if q.stream != nil && q.encoding_session != nil {
-		q.stream.SetPaused(false)
-		q.session.ChannelMessageSend(q.message.ChannelID, "Un-paused the queue.")
+	if q.Stream != nil && q.Encoding_Session != nil {
+		q.Stream.SetPaused(false)
+		q.Session.ChannelMessageSend(q.Message.ChannelID, "Un-Paused the queue.")
 	}
-	q.paused = false
+	q.Paused = false
 }
 
 func (q *Queue) Skip() {
-	if q.encoding_session != nil {
-		q.session.ChannelMessageSend(q.message.ChannelID, "Skipped the current song.")
+	if q.Encoding_Session != nil {
+		q.Session.ChannelMessageSend(q.Message.ChannelID, "Skipped the current song.")
 		q.Shift()
-		if q.stream != nil && q.encoding_session != nil {
-			q.stream.SetPaused(true)
-			q.encoding_session.Stop()
+		if q.Stream != nil && q.Encoding_Session != nil {
+			q.Stream.SetPaused(true)
+			q.Encoding_Session.Stop()
 		}
-		if q.current_pos < q.Len() {
-			q.end_of_queue = false
+		if q.Current_Pos < q.Len() {
+			q.End_Of_Queue = false
 		}
 		q.Play()
 	}
 }
+
 func (q *Queue) SkipQuiet() {
-	if q.encoding_session != nil {
+	if q.Encoding_Session != nil {
 		q.Shift()
-		if q.stream != nil && q.encoding_session != nil {
-			q.stream.SetPaused(true)
-			q.encoding_session.Stop()
+		if q.Stream != nil && q.Encoding_Session != nil {
+			q.Stream.SetPaused(true)
+			q.Encoding_Session.Stop()
 		}
-		if q.current_pos < q.Len() {
-			q.end_of_queue = false
+		if q.Current_Pos < q.Len() {
+			q.End_Of_Queue = false
 		}
 		q.Play()
 	}
 }
 
-func (q Queue) EndOfQueue() bool {
-	return q.end_of_queue
-}
-
-func (q Queue) Paused() bool {
-	if q.DoesStreamExist() {
-		return q.paused
-	}
-	return true
-}
-
-func (q *Queue) Loop() {
-	if q.loop == false {
-		q.loop = true
-		q.session.ChannelMessageSend(q.message.ChannelID, "Turned the loop on.")
+func (q *Queue) SetLoop() {
+	if !q.Loop {
+		q.Loop = true
+		q.Session.ChannelMessageSend(q.Message.ChannelID, "Turned the Loop on.")
 	} else {
-		q.loop = false
-		q.session.ChannelMessageSend(q.message.ChannelID, "Turned the loop off.")
+		q.Loop = false
+		q.Session.ChannelMessageSend(q.Message.ChannelID, "Turned the Loop off.")
 	}
 }
 
-func (q *Queue) Shuffle() {
-	if q.shuffle == false {
-		q.shuffle = true
-		q.session.ChannelMessageSend(q.message.ChannelID, "Turned shuffle on.")
+func (q *Queue) SetShuffle() {
+	if !q.Shuffle {
+		q.Shuffle = true
+		q.Session.ChannelMessageSend(q.Message.ChannelID, "Turned Shuffle on.")
 	} else {
-		q.shuffle = false
-		q.session.ChannelMessageSend(q.message.ChannelID, "Turned shuffle off.")
-		q.already_played_tracks = make([]int, 0)
+		q.Shuffle = false
+		q.Session.ChannelMessageSend(q.Message.ChannelID, "Turned Shuffle off.")
+		q.Already_Played_Tracks = make([]int, 0)
 	}
 }
 
 // The main Function for the queue; this function plays the song at the current posistion,
-// pauses the queue if at the end, or will loop it.
+// pauses the queue if at the end, or will Loop it.
 //
 // This function basically is the control flow for the entire queue
 func (q *Queue) Play() {
 
-	if q.stream != nil {
-		if q.stream.Paused() {
-			q.paused = true
+	if q.Stream != nil {
+		if q.Stream.Paused() {
+			q.Paused = true
 		} else {
-			q.paused = false
+			q.Paused = false
 		}
 	}
 
-	if q.current_pos > q.Len() {
-		if q.loop == false {
+	if q.Current_Pos > q.Len() {
+		if !q.Loop {
 
-			q.end_of_queue = true
-			q.current_pos = q.Len()
+			q.End_Of_Queue = true
+			q.Current_Pos = q.Len()
 
-			if q.stream != nil {
-				q.stream.SetPaused(true)
-				q.paused = true
-				q.encoding_session.Cleanup()
+			if q.Stream != nil {
+				q.Stream.SetPaused(true)
+				q.Paused = true
+				q.Encoding_Session.Cleanup()
 			}
 
-			guild, _ := q.session.State.Guild(q.message.GuildID)
+			guild, _ := q.Session.State.Guild(q.Message.GuildID)
 			in_vc := false
 			for i := 0; i < len(guild.VoiceStates); i++ {
-				if guild.VoiceStates[i].UserID == q.session.State.User.ID {
+				if guild.VoiceStates[i].UserID == q.Session.State.User.ID {
 					in_vc = true
 					break
 				}
 			}
 			if in_vc {
-				q.session.ChannelMessageSend(q.message.ChannelID, "Reached end of queue, pausing.")
+				q.Session.ChannelMessageSend(q.Message.ChannelID, "Reached end of queue, pausing.")
 			}
 
 		} else {
-			q.current_pos = 1
+			q.Current_Pos = 1
 		}
 	}
 
-	if q.paused {
-		if q.stream != nil {
-			q.stream.SetPaused(true)
+	if q.Paused {
+		if q.Stream != nil {
+			q.Stream.SetPaused(true)
 		}
 	} else {
-		if q.stream != nil {
-			q.stream.SetPaused(false)
+		if q.Stream != nil {
+			q.Stream.SetPaused(false)
 		}
 	}
-	if q.stream != nil {
-		if q.stream.Paused() {
-			q.paused = true
+	if q.Stream != nil {
+		if q.Stream.Paused() {
+			q.Paused = true
 		} else {
-			q.paused = false
+			q.Paused = false
 		}
 	}
 
-	if q.end_of_queue == false && q.paused == false {
+	if !q.End_Of_Queue && !q.Paused {
 
-		if q.paused == false {
-			guild, _ := q.session.State.Guild(q.message.GuildID)
+		if !q.Paused {
+			guild, _ := q.Session.State.Guild(q.Message.GuildID)
 			in_vc := false
 			for i := 0; i < len(guild.VoiceStates); i++ {
-				if guild.VoiceStates[i].UserID == q.session.State.User.ID {
+				if guild.VoiceStates[i].UserID == q.Session.State.User.ID {
 					in_vc = true
 					break
 				}
 			}
 			if in_vc {
-				q.session.ChannelMessageSend(q.message.ChannelID, "Now playing: "+q.Current().Title)
+				q.Session.ChannelMessageSend(q.Message.ChannelID, "Now playing: "+q.Current().Title)
 			}
 		}
 		encodingOptions := dca.StdEncodeOptions
 		encodingOptions.RawOutput = true
 		encodingOptions.Bitrate = 256
 		encodingOptions.Application = "lowdelay"
-		encodingSession, err := dca.EncodeFile(q.GetStreamUrl(&q.songs[q.current_pos-1]), encodingOptions)
+		encodingSession, err := dca.EncodeFile(q.GetStreamUrl(&q.Songs[q.Current_Pos-1]), encodingOptions)
 
 		if err != nil {
 			return
@@ -431,16 +407,16 @@ func (q *Queue) Play() {
 		defer encodingSession.Cleanup()
 		done := make(chan error)
 
-		q.stream = dca.NewStream(encodingSession, q.voice, done)
-		q.encoding_session = encodingSession
-		err = <-done
+		q.Stream = dca.NewStream(encodingSession, q.Voice, done)
+		q.Encoding_Session = encodingSession
+		<-done
 
-		if q.paused == true {
-			q.stream.SetPaused(true)
+		if q.Paused {
+			q.Stream.SetPaused(true)
 		}
 
 		defer q.Shift()
-		q.end_of_queue = false
+		q.End_Of_Queue = false
 	}
 }
 
@@ -492,7 +468,7 @@ func YtSearch(song string, queue Queue) ([]Song, error) {
 
 	var out []byte
 
-	if is_url == true {
+	if is_url {
 
 		out, err = exec.Command(
 			"yt-dlp",

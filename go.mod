@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/ImNotTwig/dca v0.0.0-20221125034914-f35f4857f025
 	github.com/bwmarrin/discordgo v0.26.1
+	github.com/raitonoberu/lyricsapi v0.0.0-20220713105238-eca82edb8b41
 	github.com/spf13/viper v1.14.0
 	github.com/zackradisic/soundcloud-api v0.1.8
 	github.com/zmb3/spotify/v2 v2.3.0
@@ -12,7 +13,6 @@ require (
 )
 
 require (
-	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
@@ -21,11 +21,9 @@ require (
 	github.com/jonas747/ogg v0.0.0-20161220051205-b4f6f4cf3757 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/parnurzeal/gorequest v0.2.16 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/rapito/go-spotify v0.0.0-20201203225102-8089a3ff3172 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -41,5 +39,4 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	moul.io/http2curl v1.0.0 // indirect
 )

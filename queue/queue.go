@@ -3,6 +3,7 @@ package queue
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/url"
 	"os/exec"
@@ -59,7 +60,7 @@ func (q *Queue) SetMessageChannel(m *discordgo.MessageCreate) {
 }
 
 func (q *Queue) CheckPlaying() {
-	if q.Paused {
+	if !q.Paused {
 		if q.DoesStreamExist() {
 			return
 		} else if !q.DoesStreamExist() {
@@ -428,7 +429,7 @@ func (q Queue) GetStreamUrl(song *Song) string {
 		}
 		song.Url = song_list[0].Url
 	}
-	out, _ := exec.Command(
+	out, err := exec.Command(
 		"yt-dlp",
 		"-N",
 		"64",
@@ -439,6 +440,11 @@ func (q Queue) GetStreamUrl(song *Song) string {
 		"aria2c",
 		"-J",
 	).Output()
+
+	if err != nil {
+		log.Println(err)
+	}
+
 	var json_data map[string]interface{}
 	json.Unmarshal(out, &json_data)
 
@@ -538,6 +544,5 @@ func YtSearch(song string, queue Queue) ([]Song, error) {
 		}
 		song_list = append(song_list, song)
 	}
-
 	return song_list, nil
 }

@@ -9,144 +9,166 @@ import (
 )
 
 type Command struct {
-	names         []string
-	command       func(*discordgo.Session, *discordgo.MessageCreate, *string)
-	help_message  string
-	command_group string
+	Names        []string
+	Command      func(*discordgo.Session, *discordgo.MessageCreate, *string)
+	HelpMessage  string
+	Syntax       string
+	CommandGroup string
 }
 
 var (
-	command_list = []Command{
+	CommandList = []Command{
 		//Music commands
 		{
-			names:   []string{"play", "p"},
-			command: music.Play,
-			help_message: `Plays a song if nothing is playing, adds a song to the queue if something is, if no song is given will unpause the queue.
-syntax: ~play <optional_song>`,
-			command_group: "MusicCommands",
+			Names:        []string{"play", "p"},
+			Command:      music.Play,
+			HelpMessage:  `Plays a song if nothing is playing, adds a song to the queue if something is, if no song is given will unpause the queue.`,
+			Syntax:       `~play <optional_song>`,
+			CommandGroup: "MusicCommands",
 		},
 		{
-			names:   []string{"playnext", "pn"},
-			command: music.PlayNext,
-			help_message: `will add a song to the next position in queue. Only gets the first song in a playlist or album.
-syntax: ~playnext <song>`,
-			command_group: "MusicCommands",
+			Names:        []string{"playnext", "pn"},
+			Command:      music.PlayNext,
+			HelpMessage:  `will add a song to the next position in queue. Only gets the first song in a playlist or album.`,
+			Syntax:       `~playnext <song>`,
+			CommandGroup: "MusicCommands",
 		},
 		{
-			names:   []string{"q", "queue"},
-			command: music.ShowQueue,
-			help_message: `Sends an embed that shows the queue, every song has the number in queue, and the current song has a -> next to it.
-syntax: ~queue`,
-			command_group: "MusicCommands",
+			Names:        []string{"q", "queue"},
+			Command:      music.ShowQueue,
+			HelpMessage:  `Sends an embed that shows the queue, every song has the number in queue, and the current song has a -> next to it.`,
+			Syntax:       `~queue`,
+			CommandGroup: "MusicCommands",
 		},
 		{
-			names:   []string{"clear"},
-			command: music.Clear,
-			help_message: `Clears the queue.
-syntax: ~clear`,
-			command_group: "MusicCommands",
+			Names:        []string{"clear"},
+			Command:      music.Clear,
+			HelpMessage:  `Clears the queue.`,
+			Syntax:       `~clear`,
+			CommandGroup: "MusicCommands",
 		},
 		{
-			names:   []string{"nowplaying", "np"},
-			command: music.NowPlaying,
-			help_message: `Shows the position, title, and current position/duration of the currently playing song.
-syntax: ~nowplaying`,
-			command_group: "MusicCommands",
+			Names:        []string{"nowplaying", "np"},
+			Command:      music.NowPlaying,
+			HelpMessage:  `Shows the position, title, and current position/duration of the currently playing song.`,
+			Syntax:       `~nowplaying`,
+			CommandGroup: "MusicCommands",
 		},
 		{
-			names:   []string{"pause"},
-			command: music.Pause,
-			help_message: `Pauses the queue. (This includes the currently playing song)
-syntax: ~pause`,
-			command_group: "MusicCommands",
+			Names:        []string{"pause"},
+			Command:      music.Pause,
+			HelpMessage:  `Pauses the queue. (This includes the currently playing song)`,
+			Syntax:       `~pause`,
+			CommandGroup: "MusicCommands",
 		},
 		{
-			names:   []string{"unpause", "resume"},
-			command: music.Unpause,
-			help_message: `Resumes the queue. (This is the same as using ~play without a song argument)
-syntax: ~resume`,
-			command_group: "MusicCommands",
+			Names:        []string{"unpause", "resume"},
+			Command:      music.Unpause,
+			HelpMessage:  `Resumes the queue. (This is the same as using ~play without a song argument)`,
+			Syntax:       `~resume`,
+			CommandGroup: "MusicCommands",
 		},
 		{
-			names:   []string{"next", "skip", "s"},
-			command: music.Skip,
-			help_message: `Skips the currently playing song.
-syntax: ~skip`,
-			command_group: "MusicCommands",
+			Names:        []string{"next", "skip", "s"},
+			Command:      music.Skip,
+			HelpMessage:  `Skips the currently playing song.`,
+			Syntax:       `~skip`,
+			CommandGroup: "MusicCommands",
 		},
 		{
-			names:   []string{"goto", "jumpto"},
-			command: music.GoTo,
-			help_message: `Moves the current position in the queue to the one specfied
-syntax: ~goto <number in queue>`,
-			command_group: "MusicCommands",
+			Names:        []string{"goto", "jumpto"},
+			Command:      music.GoTo,
+			HelpMessage:  `Moves the current position in the queue to the one specfied`,
+			Syntax:       `~goto <number in queue>`,
+			CommandGroup: "MusicCommands",
 		},
 		{
-			names:   []string{"leave", "disconnect", "quit", "fuckoff", "stop"},
-			command: music.FuckOff,
-			help_message: `Makes the bot leave the voice channel and clear the queue.
-syntax: ~leave`,
-			command_group: "MusicCommands",
+			Names:        []string{"leave", "disconnect", "quit", "fuckoff", "stop"},
+			Command:      music.FuckOff,
+			HelpMessage:  `Makes the bot leave the voice channel and clear the queue.`,
+			Syntax:       `~leave`,
+			CommandGroup: "MusicCommands",
 		},
 		{
-			names:   []string{"remove"},
-			command: music.Remove,
-			help_message: `Removes a song from the queue at the specified position
-syntax: ~remove <position in queue>`,
-			command_group: "MusicCommands",
+			Names:        []string{"remove"},
+			Command:      music.Remove,
+			HelpMessage:  `Removes a song from the queue at the specified position`,
+			Syntax:       `~remove <position in queue>`,
+			CommandGroup: "MusicCommands",
 		},
 		{
-			names:   []string{"loop"},
-			command: music.Loop,
-			help_message: `Turns the loop on, if it is off, as well as vice versa.
-syntax: ~loop`,
-			command_group: "MusicCommands",
+			Names:        []string{"loop"},
+			Command:      music.Loop,
+			HelpMessage:  `Turns the loop on, if it is off, as well as vice versa.`,
+			Syntax:       `~loop`,
+			CommandGroup: "MusicCommands",
 		},
 		{
-			names:   []string{"shuffle"},
-			command: music.Shuffle,
-			help_message: `Turns the shuffle on, if it is on, as well as vice versa.
-syntax: ~shuffle`,
-			command_group: "MusicCommands",
+			Names:        []string{"shuffle"},
+			Command:      music.Shuffle,
+			HelpMessage:  `Turns the shuffle on, if it is on, as well as vice versa.`,
+			Syntax:       `~shuffle`,
+			CommandGroup: "MusicCommands",
 		},
 		{
-			names:   []string{"lyrics", "lyric"},
-			command: music.Lyrics,
-			help_message: `Show lyrics of the given song, if no song is given it checks the queue for the currently playing song.
-syntax: ~lyrics <song>`,
-			command_group: "MusicCommands",
+			Names:        []string{"lyrics", "lyric"},
+			Command:      music.Lyrics,
+			HelpMessage:  `Show lyrics of the given song, if no song is given it checks the queue for the currently playing song.`,
+			Syntax:       `~lyrics <song>`,
+			CommandGroup: "MusicCommands",
 		},
 
 		// Utility Commands
 		{
-			names:   []string{"setprefix", "prefix"},
-			command: utility.SetPrefix,
-			help_message: `Sets a prefix for this server, if you use this command again you have to use the new prefix
-syntax: ~prefix <new prefix>`,
-			command_group: "Utility",
+			Names:        []string{"setprefix", "prefix"},
+			Command:      utility.SetPrefix,
+			HelpMessage:  `Sets a prefix for this server, if you use this Command again you have to use the new prefix`,
+			Syntax:       `~prefix <new prefix>`,
+			CommandGroup: "UtilityCommands",
+		},
+		{
+			Names:        []string{"help"},
+			Command:      Help,
+			HelpMessage:  `Shows the help menu, if you don't input a module or command to get help for, it will show all the modules that you can get help for.`,
+			Syntax:       `~help <optional command>`,
+			CommandGroup: "UtilityCommands",
 		},
 
 		// Moderation Commands
 		{
-			names:   []string{"kick"},
-			command: moderation.Kick,
-			help_message: `Kicks a user from the server. You can supply a reason of why the user was kicked, but it is optional.
-syntax: ~kick <user> <reason>`,
-			command_group: "Moderation",
+			Names:        []string{"kick"},
+			Command:      moderation.Kick,
+			HelpMessage:  `Kicks a user from the server. You can supply a reason of why the user was kicked, but it is optional.`,
+			Syntax:       `~kick <user> <reason>`,
+			CommandGroup: "ModerationCommands",
 		},
 		{
-			names:   []string{"ban"},
-			command: moderation.Ban,
-			help_message: `Bans a user from the server. You can supply a reason of why the user was banned, but it is optional.
-syntax: ~ban <user> <reason>`,
-			command_group: "Moderation",
+			Names:        []string{"ban"},
+			Command:      moderation.Ban,
+			HelpMessage:  `Bans a user from the server. You can supply a reason of why the user was banned, but it is optional.`,
+			Syntax:       `~ban <user> <reason>`,
+			CommandGroup: "ModerationCommands",
 		},
 		{
-			names:   []string{"unban"},
-			command: moderation.UnBan,
-			help_message: `Unbans a user from the server.
-syntax: ~unban <user>`,
-			command_group: "Moderation",
+			Names:        []string{"unban"},
+			Command:      moderation.UnBan,
+			HelpMessage:  `Unbans a user from the server.`,
+			Syntax:       `~unban <user>`,
+			CommandGroup: "ModerationCommands",
 		},
 	}
 )
+
+func Help(s *discordgo.Session, m *discordgo.MessageCreate, args *string) {
+
+	switch *args {
+	case "":
+		// if the user wants all the modules
+	case "music":
+
+	case "moderation":
+
+	case "utility":
+
+	}
+}

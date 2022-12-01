@@ -65,9 +65,9 @@ func HandleCommand(s *discordgo.Session, msg *discordgo.MessageCreate, command *
 
 	has_command := false
 
-	for i := 0; i < len(command_list); i++ {
-		if contains(command_list[i].names, strings.ToLower(command.Command)) {
-			command_list[i].command(s, msg, &command.Args)
+	for i := 0; i < len(CommandList); i++ {
+		if contains(CommandList[i].Names, strings.ToLower(command.Command)) {
+			CommandList[i].Command(s, msg, &command.Args)
 			has_command = true
 			break
 		}

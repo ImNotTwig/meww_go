@@ -189,12 +189,14 @@ func PlayNext(s *discordgo.Session, message *discordgo.MessageCreate, song *stri
 
 		// getting the voice connection
 		voice, err := GetVoice(s, message)
-		if err == nil {
-			server_queue.SetVoice(voice)
-		} else if voice != server_queue.Voice {
+		if server_queue.Voice == nil {
+			server_queue.Voice = voice
+		} else if voice.ChannelID != server_queue.Voice.ChannelID {
 			s.ChannelMessageSend(message.ChannelID, "The bot is already in another voice channel.")
 			return
-		} else if err != nil && voice == nil {
+		} else if voice.ChannelID == server_queue.Voice.ChannelID {
+			server_queue.Voice = voice
+		} else if err != nil && voice != server_queue.Voice {
 			s.ChannelMessageSend(message.ChannelID, "There was an error while connecting to the voice channel.")
 			return
 		}
@@ -242,12 +244,14 @@ func Play(s *discordgo.Session, message *discordgo.MessageCreate, song *string) 
 	// get a voice connection, and if we already have one compare the two
 	// if it's different tell the user that they cant do this because the bot is connected elsewhere.
 	voice, err := GetVoice(s, message)
-	if err == nil {
-		server_queue.SetVoice(voice)
-	} else if voice != server_queue.Voice {
+	if server_queue.Voice == nil {
+		server_queue.Voice = voice
+	} else if voice.ChannelID != server_queue.Voice.ChannelID {
 		s.ChannelMessageSend(message.ChannelID, "The bot is already in another voice channel.")
 		return
-	} else if err != nil && voice == nil {
+	} else if voice.ChannelID == server_queue.Voice.ChannelID {
+		server_queue.Voice = voice
+	} else if err != nil && voice != server_queue.Voice {
 		s.ChannelMessageSend(message.ChannelID, "There was an error while connecting to the voice channel.")
 		return
 	}
@@ -255,30 +259,33 @@ func Play(s *discordgo.Session, message *discordgo.MessageCreate, song *string) 
 	// seeing if we get any songs from querying the non-yt song searcher (spotify and soundcloud)
 	// if we dont then just search yt-dlp
 	track_list := GetNonYTSongs(s, message, song)
+
 	if track_list == nil {
 		var song_list []queue.Song
 		if strings.HasPrefix(*song, "https://open.spotify") || strings.HasPrefix(*song, "https://soundcloud") {
 			s.ChannelMessageSend(message.ChannelID, "Could not get song(s) from given query.")
 			return
 		}
-		song_list, err = queue.YtSearch(*song, *server_queue)
 		if err != nil {
 			log.Println(err)
 			s.ChannelMessageSend(message.ChannelID, "Could not get song(s) from given query.")
 			return
 		}
 
+		song_list, _ = queue.YtSearch(*song, *server_queue)
+
 		for i := 0; i < len(song_list); i++ {
 			server_queue.Enqueue(song_list[i])
 		}
 	} else {
+		fmt.Println(track_list)
 		for i := 0; i < len(track_list); i++ {
 			server_queue.Enqueue(track_list[i])
 		}
 	}
 
 	server_queue.SetMessageChannel(message)
-	go server_queue.CheckPlaying()
+	server_queue.CheckPlaying()
 }
 
 // Pause function, this pauses the queue, and the currently playing song.

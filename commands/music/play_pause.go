@@ -8,6 +8,7 @@ import (
 	"meww_go/queue"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/raitonoberu/lyricsapi/lyrics"
@@ -16,16 +17,6 @@ import (
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
 	"golang.org/x/oauth2/clientcredentials"
 )
-
-// spotify
-var SpotifyConfig = &clientcredentials.Config{
-	ClientID:     config.ReadConfig().Tokens.Spotify_id,
-	ClientSecret: config.ReadConfig().Tokens.Spotify_secret,
-	TokenURL:     spotifyauth.TokenURL,
-}
-var token, _ = SpotifyConfig.Token(context.Background())
-var http_client = spotifyauth.New().Client(context.Background(), token)
-var Spotify = spotify.New(http_client)
 
 // soundcloud
 var SoundCloud, _ = soundcloudapi.New(soundcloudapi.APIOptions{})
@@ -36,8 +27,23 @@ var lyricsapi = lyrics.NewLyricsApi("sp_t=f99b345620f5ddbdf4c76c5a667f9e44; sp_m
 // Queue Dict
 var QueueDict = make(map[string]*queue.Queue)
 
+func GetSpotify() *spotify.Client {
+	// spotify
+	SpotifyConfig := &clientcredentials.Config{
+		ClientID:     config.ReadConfig().Tokens.Spotify_id,
+		ClientSecret: config.ReadConfig().Tokens.Spotify_secret,
+		TokenURL:     spotifyauth.TokenURL,
+	}
+	token, _ := SpotifyConfig.Token(context.Background())
+	http_client := spotifyauth.New().Client(context.Background(), token)
+	Spotify := spotify.New(http_client)
+
+	return Spotify
+}
+
 func GetNonYTSongs(s *discordgo.Session, message *discordgo.MessageCreate, song *string) []queue.Song {
 	server_queue := QueueDict[message.GuildID]
+	Spotify := GetSpotify()
 
 	var track_list []queue.Song
 
@@ -58,7 +64,9 @@ func GetNonYTSongs(s *discordgo.Session, message *discordgo.MessageCreate, song 
 
 		current_pos := server_queue.Current_Pos
 		for i := 0; i < len(tracks.Tracks.Tracks); i++ {
-			duration := strconv.Itoa(tracks.Tracks.Tracks[i].Duration / 1000)
+			duration_in_secs := tracks.Tracks.Tracks[i].Duration / 1000
+			duration_in_time, _ := time.ParseDuration(fmt.Sprintf("%vs", duration_in_secs))
+			duration := duration_in_time.String()
 			track := queue.Song{
 				Title:    fmt.Sprintf("%v - %v", tracks.Tracks.Tracks[i].Name, tracks.Artists[0].Name),
 				Duration: &duration,
@@ -78,7 +86,9 @@ func GetNonYTSongs(s *discordgo.Session, message *discordgo.MessageCreate, song 
 
 		current_pos := server_queue.Current_Pos
 		for i := 0; i < len(tracks.Items); i++ {
-			duration := strconv.Itoa(tracks.Items[i].Track.Track.Duration / 1000)
+			duration_in_secs := tracks.Items[i].Track.Track.Duration / 1000
+			duration_in_time, _ := time.ParseDuration(fmt.Sprintf("%vs", duration_in_secs))
+			duration := duration_in_time.String()
 			track := queue.Song{
 				Title:    fmt.Sprintf("%v - %v", tracks.Items[i].Track.Track.Name, tracks.Items[i].Track.Track.Artists[0].Name),
 				Duration: &duration,
@@ -97,7 +107,9 @@ func GetNonYTSongs(s *discordgo.Session, message *discordgo.MessageCreate, song 
 			return nil
 		}
 
-		duration := strconv.Itoa(tracks.Duration / 1000)
+		duration_in_secs := tracks.Duration / 1000
+		duration_in_time, _ := time.ParseDuration(fmt.Sprintf("%vs", duration_in_secs))
+		duration := duration_in_time.String()
 		track := queue.Song{
 			Title:    fmt.Sprintf("%v - %v", tracks.Name, tracks.Artists[0].Name),
 			Duration: &duration,
@@ -118,7 +130,7 @@ func GetNonYTSongs(s *discordgo.Session, message *discordgo.MessageCreate, song 
 			tracks := playlist_info.Tracks
 			current_pos := server_queue.Current_Pos
 			for i := 0; i < len(tracks); i++ {
-				duration := fmt.Sprintf("%v", tracks[i].DurationMS/1000)
+				duration := fmt.Sprintf("%vs", tracks[i].DurationMS/1000)
 				track := queue.Song{
 					Title:    tracks[i].Title,
 					Url:      &tracks[i].PermalinkURL,
@@ -278,7 +290,6 @@ func Play(s *discordgo.Session, message *discordgo.MessageCreate, song *string) 
 			server_queue.Enqueue(song_list[i])
 		}
 	} else {
-		fmt.Println(track_list)
 		for i := 0; i < len(track_list); i++ {
 			server_queue.Enqueue(track_list[i])
 		}
@@ -441,7 +452,7 @@ func Lyrics(s *discordgo.Session, message *discordgo.MessageCreate, args *string
 	if args != nil && strings.TrimSpace(*args) != "" {
 		song_lyrics, err := lyricsapi.GetByName(*args)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			s.ChannelMessageSend(message.ChannelID, "Could not get the lyrics for the given song.")
 			return
 		}

@@ -52,7 +52,9 @@ func main() {
 		for guild_timer_map[evt.GuildID] = 0; len(guild.VoiceStates) < 2; guild_timer_map[evt.GuildID] += 1 {
 			time.Sleep(time.Duration(1 * time.Second))
 			if guild_timer_map[evt.GuildID] == 30 {
-				music.QueueDict[evt.GuildID].FuckOff()
+				if music.QueueDict[evt.GuildID].Voice != nil {
+					music.QueueDict[evt.GuildID].FuckOff()
+				}
 				break
 			}
 			if len(guild.VoiceStates) >= 2 {

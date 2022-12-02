@@ -1,9 +1,12 @@
 package command_parsing
 
 import (
+	"log"
+	"meww_go/commands/fun"
 	"meww_go/commands/moderation"
 	"meww_go/commands/music"
 	"meww_go/commands/utility"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -22,8 +25,8 @@ var (
 		{
 			Names:        []string{"play", "p"},
 			Command:      music.Play,
-			HelpMessage:  `Plays a song if nothing is playing, adds a song to the queue if something is, if no song is given will unpause the queue.`,
-			Syntax:       `~play <optional_song>`,
+			HelpMessage:  `Plays a song if nothing is playing, adds a song to the queue if something is. If no song is given will unpause the queue.`,
+			Syntax:       `~play <optional song>`,
 			CommandGroup: "MusicCommands",
 		},
 		{
@@ -34,9 +37,9 @@ var (
 			CommandGroup: "MusicCommands",
 		},
 		{
-			Names:        []string{"q", "queue"},
+			Names:        []string{"queue", "q"},
 			Command:      music.ShowQueue,
-			HelpMessage:  `Sends an embed that shows the queue, every song has the number in queue, and the current song has a -> next to it.`,
+			HelpMessage:  `Sends an embed that shows the songs in the queue with their positions in queue. The current song has a -> next to it.`,
 			Syntax:       `~queue`,
 			CommandGroup: "MusicCommands",
 		},
@@ -50,7 +53,7 @@ var (
 		{
 			Names:        []string{"nowplaying", "np"},
 			Command:      music.NowPlaying,
-			HelpMessage:  `Shows the position, title, and current position/duration of the currently playing song.`,
+			HelpMessage:  `Shows the position, title, and current position in the duration of the currently playing song.`,
 			Syntax:       `~nowplaying`,
 			CommandGroup: "MusicCommands",
 		},
@@ -62,14 +65,14 @@ var (
 			CommandGroup: "MusicCommands",
 		},
 		{
-			Names:        []string{"unpause", "resume"},
+			Names:        []string{"resume", "unpause"},
 			Command:      music.Unpause,
 			HelpMessage:  `Resumes the queue. (This is the same as using ~play without a song argument)`,
 			Syntax:       `~resume`,
 			CommandGroup: "MusicCommands",
 		},
 		{
-			Names:        []string{"next", "skip", "s"},
+			Names:        []string{"skip", "next", "s"},
 			Command:      music.Skip,
 			HelpMessage:  `Skips the currently playing song.`,
 			Syntax:       `~skip`,
@@ -120,17 +123,10 @@ var (
 
 		// Utility Commands
 		{
-			Names:        []string{"setprefix", "prefix"},
+			Names:        []string{"prefix", "setprefix"},
 			Command:      utility.SetPrefix,
-			HelpMessage:  `Sets a prefix for this server, if you use this Command again you have to use the new prefix`,
+			HelpMessage:  `Sets a prefix for this server, if you use this command again you have to use the new prefix`,
 			Syntax:       `~prefix <new prefix>`,
-			CommandGroup: "UtilityCommands",
-		},
-		{
-			Names:        []string{"help"},
-			Command:      Help,
-			HelpMessage:  `Shows the help menu, if you don't input a module or command to get help for, it will show all the modules that you can get help for.`,
-			Syntax:       `~help <optional command>`,
 			CommandGroup: "UtilityCommands",
 		},
 
@@ -156,19 +152,112 @@ var (
 			Syntax:       `~unban <user>`,
 			CommandGroup: "ModerationCommands",
 		},
+
+		// Fun Commands
+		{
+			Names:        []string{"cat"},
+			Command:      fun.Cats,
+			HelpMessage:  `Shows a picture of a cat.`,
+			Syntax:       `~cat`,
+			CommandGroup: "FunCommands",
+		},
+		{
+			Names:        []string{"catbomb"},
+			Command:      fun.CatBomb,
+			HelpMessage:  `Shows 10 pictures of cats.`,
+			Syntax:       `~catbomb`,
+			CommandGroup: "FunCommands",
+		},
 	}
 )
 
+// this command has to be here because it would cause an import loop if I didnt put it in this file
+// I might rework the command handler to make it where I can put this command in the UtilityCommands group
 func Help(s *discordgo.Session, m *discordgo.MessageCreate, args *string) {
 
-	switch *args {
-	case "":
-		// if the user wants all the modules
-	case "music":
+	embed := &discordgo.MessageEmbed{
+		Title: "Help",
+	}
 
-	case "moderation":
+	var command *Command
+	for i := 0; i < len(CommandList); i++ {
+		if contains(CommandList[i].Names, *args) {
+			command = &CommandList[i]
+			break
+		}
+	}
 
-	case "utility":
+	if command != nil {
+		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+			Name:  *args,
+			Value: command.HelpMessage,
+		})
+		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+			Name:  "Use",
+			Value: command.Syntax,
+		})
+		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+			Name:  "Names",
+			Value: strings.Join(command.Names, ", "),
+		})
+	} else {
+		var musiccommands []string
+		var utilcommands []string
+		var moderationcommands []string
+		var funcommands []string
 
+		for i := 0; i < len(CommandList); i++ {
+			command := CommandList[i]
+			if command.CommandGroup == "ModerationCommands" {
+				moderationcommands = append(moderationcommands, command.Names[0])
+			} else if command.CommandGroup == "MusicCommands" {
+				musiccommands = append(musiccommands, command.Names[0])
+			} else if command.CommandGroup == "UtilityCommands" {
+				utilcommands = append(utilcommands, command.Names[0])
+			} else if command.CommandGroup == "FunCommands" {
+				funcommands = append(funcommands, command.Names[0])
+			}
+		}
+
+		moderationcommandsstring := strings.Join(moderationcommands, " ")
+
+		musiccommandsstring := strings.Join(musiccommands, " ")
+
+		utilcommandsstring := strings.Join(utilcommands, " ")
+
+		funcommandsstring := strings.Join(funcommands, " ")
+
+		embed.Fields = []*discordgo.MessageEmbedField{
+			{
+				Name:   "Moderation Commands",
+				Value:  moderationcommandsstring,
+				Inline: false,
+			},
+			{
+				Name:   "Music Commands",
+				Value:  musiccommandsstring,
+				Inline: false,
+			},
+			{
+				Name:   "Utility Commands",
+				Value:  utilcommandsstring,
+				Inline: false,
+			},
+			{
+				Name:   "Fun Commands",
+				Value:  funcommandsstring,
+				Inline: false,
+			},
+		}
+
+	}
+
+	message := discordgo.MessageSend{
+		Embeds: []*discordgo.MessageEmbed{embed},
+	}
+
+	_, err := s.ChannelMessageSendComplex(m.ChannelID, &message)
+	if err != nil {
+		log.Println(err)
 	}
 }

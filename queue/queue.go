@@ -150,7 +150,7 @@ func (q *Queue) FuckOff() {
 		q.Encoding_Session.Stop()
 	}
 	q.Current_Pos = 0
-	if q.Voice != nil {
+	if q.Voice != nil && q.Session != nil {
 		q.Session.ChannelMessageSend(q.Message.ChannelID, "The bot has left the Voice channel, and the queue has been cleared.")
 	}
 	q.Voice.Disconnect()
@@ -360,6 +360,10 @@ func (q *Queue) Play() {
 
 		} else {
 			q.Current_Pos = 1
+			if q.Stream != nil {
+				q.Encoding_Session.Cleanup()
+			}
+			q.Paused = false
 		}
 	}
 
@@ -380,20 +384,17 @@ func (q *Queue) Play() {
 		}
 	}
 
-	if !q.End_Of_Queue && !q.Paused {
-
-		if !q.Paused {
-			guild, _ := q.Session.State.Guild(q.Message.GuildID)
-			in_vc := false
-			for i := 0; i < len(guild.VoiceStates); i++ {
-				if guild.VoiceStates[i].UserID == q.Session.State.User.ID {
-					in_vc = true
-					break
-				}
+	if (!q.End_Of_Queue || q.Loop == true) && !q.Paused {
+		guild, _ := q.Session.State.Guild(q.Message.GuildID)
+		in_vc := false
+		for i := 0; i < len(guild.VoiceStates); i++ {
+			if guild.VoiceStates[i].UserID == q.Session.State.User.ID {
+				in_vc = true
+				break
 			}
-			if in_vc {
-				q.Session.ChannelMessageSend(q.Message.ChannelID, "Now playing: "+q.Current().Title)
-			}
+		}
+		if in_vc {
+			q.Session.ChannelMessageSend(q.Message.ChannelID, "Now playing: "+q.Current().Title)
 		}
 		encodingOptions := dca.StdEncodeOptions
 		encodingOptions.RawOutput = true
@@ -425,7 +426,7 @@ func (q Queue) GetStreamUrl(song *Song) string {
 	if song.Url == nil {
 		song_list, err := YtSearch(song.Title, q)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 		song.Url = song_list[0].Url
 	}
@@ -452,7 +453,7 @@ func (q Queue) GetStreamUrl(song *Song) string {
 
 		requested_formats := json_data["requested_formats"].([]interface{})
 		var format_we_want map[string]interface{}
-		if len(requested_formats) < 2 {
+		if len(requested_formats) == 1 {
 			format_we_want = requested_formats[0].(map[string]interface{})
 		} else {
 			format_we_want = requested_formats[1].(map[string]interface{})

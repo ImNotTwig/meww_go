@@ -47,7 +47,7 @@ func ParseCommand(m *discordgo.MessageCreate) *ParsedCommand {
 	if strings.HasPrefix(m.Content, prefix) {
 		return &ParsedCommand{Command: command, Args: args, IsCommand: true}
 	} else {
-		return &ParsedCommand{Command: command, Args: args, IsCommand: false}
+		return &ParsedCommand{Command: "", Args: "", IsCommand: false}
 	}
 }
 
@@ -72,6 +72,12 @@ func HandleCommand(s *discordgo.Session, msg *discordgo.MessageCreate, command *
 			break
 		}
 	}
+
+	if command.IsCommand && command.Command == "help" && !has_command {
+		Help(s, msg, &command.Args)
+		return
+	}
+
 	if !has_command && command.IsCommand {
 		s.ChannelMessageSendComplex(
 			msg.ChannelID, &discordgo.MessageSend{

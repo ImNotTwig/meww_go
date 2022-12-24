@@ -27,6 +27,7 @@ func main() {
 	dg.Identify.Intents = discordgo.IntentsAll
 
 	dg.AddHandler(messageCreate)
+	dg.AddHandler(MemberJoin)
 
 	dg.AddHandler(func(s *discordgo.Session, evt *discordgo.Ready) {
 		println("Logged in as " + s.State.User.Username + "#" + s.State.User.Discriminator)
@@ -51,7 +52,7 @@ func main() {
 		}
 		for guild_timer_map[evt.GuildID] = 0; len(guild.VoiceStates) < 2; guild_timer_map[evt.GuildID] += 1 {
 			time.Sleep(time.Duration(1 * time.Second))
-			if guild_timer_map[evt.GuildID] == 30 {
+			if guild_timer_map[evt.GuildID] == 30 && len(guild.VoiceStates) < 2 {
 				if music.QueueDict[evt.GuildID].Voice != nil {
 					music.QueueDict[evt.GuildID].FuckOff()
 				}
@@ -91,4 +92,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	parsed_command := command_parsing.ParseCommand(m)
 	command_parsing.HandleCommand(s, m, parsed_command)
+}
+
+func MemberJoin(s *discordgo.Session, mj *discordgo.GuildMemberAdd) {
+
 }

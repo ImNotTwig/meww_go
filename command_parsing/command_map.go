@@ -120,6 +120,13 @@ var (
 			Syntax:       `~lyrics <song>`,
 			CommandGroup: "MusicCommands",
 		},
+		{
+			Names:        []string{"restart", "reset", "rewind"},
+			Command:      music.Restart,
+			HelpMessage:  `Restart the current song in the queue to the beginning.`,
+			Syntax:       `~restart`,
+			CommandGroup: "MusicCommands",
+		},
 
 		// Utility Commands
 		{
@@ -150,6 +157,20 @@ var (
 			Command:      moderation.UnBan,
 			HelpMessage:  `Unbans a user from the server.`,
 			Syntax:       `~unban <user>`,
+			CommandGroup: "ModerationCommands",
+		},
+		{
+			Names:        []string{"mute"},
+			Command:      moderation.Mute,
+			HelpMessage:  `Mutes a member by giving them the muterole assigned by ~muterole. You can supply an optional reason or time.`,
+			Syntax:       `~mute <member> <time> <reason>`,
+			CommandGroup: "ModerationCommands",
+		},
+		{
+			Names:        []string{"muterole"},
+			Command:      moderation.Mute,
+			HelpMessage:  `Sets the given role to the muterole in this server.`,
+			Syntax:       `~muterole <role name>`,
 			CommandGroup: "ModerationCommands",
 		},
 

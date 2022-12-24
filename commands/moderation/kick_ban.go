@@ -9,6 +9,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// this function just gets a user from a server,
+// if you supplied a message without a mention it will find a member with that username
 func GetUser(s *discordgo.Session, message *discordgo.MessageCreate, args *string) (*discordgo.Member, error) {
 	guild, err := s.State.Guild(message.GuildID)
 	if err != nil {
@@ -40,7 +42,28 @@ func GetUser(s *discordgo.Session, message *discordgo.MessageCreate, args *strin
 	return user, nil
 }
 
+// this function checks if a member has certain permissions
+func MemberHasPermission(s *discordgo.Session, guildID string, userID string, m *discordgo.MessageCreate, permission int) (bool, error) {
+	perms, err := s.UserChannelPermissions(userID, m.ChannelID)
+	if err != nil {
+		return false, err
+	}
+	if perms&int64(permission) != 0 {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func Kick(s *discordgo.Session, message *discordgo.MessageCreate, reason *string) {
+	hasperms, err := MemberHasPermission(s, message.GuildID, message.Author.ID, message, 2)
+	if hasperms == false {
+		if err != nil {
+			log.Println(err)
+		}
+		s.ChannelMessageSend(message.ChannelID, "You do not have the permissions to use this command.")
+		return
+	}
 
 	kicked_user, err := GetUser(s, message, reason)
 	if err != nil {
@@ -71,6 +94,14 @@ func Kick(s *discordgo.Session, message *discordgo.MessageCreate, reason *string
 }
 
 func Ban(s *discordgo.Session, message *discordgo.MessageCreate, reason *string) {
+	hasperms, err := MemberHasPermission(s, message.GuildID, message.Author.ID, message, 2)
+	if hasperms == false {
+		if err != nil {
+			log.Println(err)
+		}
+		s.ChannelMessageSend(message.ChannelID, "You do not have the permissions to use this command.")
+		return
+	}
 
 	banned_user, err := GetUser(s, message, reason)
 	if err != nil {
@@ -101,6 +132,14 @@ func Ban(s *discordgo.Session, message *discordgo.MessageCreate, reason *string)
 }
 
 func UnBan(s *discordgo.Session, message *discordgo.MessageCreate, reason *string) {
+	hasperms, err := MemberHasPermission(s, message.GuildID, message.Author.ID, message, 2)
+	if hasperms == false {
+		if err != nil {
+			log.Println(err)
+		}
+		s.ChannelMessageSend(message.ChannelID, "You do not have the permissions to use this command.")
+		return
+	}
 
 	guild_bans, err := s.GuildBans(message.GuildID, 1000, "", "")
 

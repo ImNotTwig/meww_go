@@ -78,6 +78,10 @@ func HandleCommand(s *discordgo.Session, msg *discordgo.MessageCreate, command *
 		return
 	}
 
+	if strings.HasPrefix(command.Command, "~") {
+		return
+	}
+
 	if !has_command && command.IsCommand {
 		s.ChannelMessageSendComplex(
 			msg.ChannelID, &discordgo.MessageSend{

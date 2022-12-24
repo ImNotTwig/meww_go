@@ -285,14 +285,32 @@ func Play(s *discordgo.Session, message *discordgo.MessageCreate, song *string) 
 		}
 
 		song_list, _ = queue.YtSearch(*song, *server_queue)
-
+		var title_list []string
 		for i := 0; i < len(song_list); i++ {
 			server_queue.Enqueue(song_list[i])
+			title_list = append(title_list, song_list[i].Title)
 		}
+		embed_desc := strings.Join(title_list, "\n")
+
+		embed_to_send := discordgo.MessageEmbed{
+			Title:       "Added Songs",
+			Description: embed_desc,
+		}
+		s.ChannelMessageSendEmbed(message.ChannelID, &embed_to_send)
+
 	} else {
+		var title_list []string
 		for i := 0; i < len(track_list); i++ {
 			server_queue.Enqueue(track_list[i])
+			title_list = append(title_list, track_list[i].Title)
 		}
+		embed_desc := strings.Join(title_list, "\n")
+
+		embed_to_send := discordgo.MessageEmbed{
+			Title:       "Added Songs",
+			Description: embed_desc,
+		}
+		s.ChannelMessageSendEmbed(message.ChannelID, &embed_to_send)
 	}
 
 	server_queue.SetMessageChannel(message)
@@ -426,6 +444,17 @@ func Remove(s *discordgo.Session, message *discordgo.MessageCreate, arg *string)
 		}
 		server_queue.Remove(int)
 		server_queue.SetMessageChannel(message)
+	}
+}
+
+// Restart functoin, this function will restart the current song in the queue
+func Restart(s *discordgo.Session, message *discordgo.MessageCreate, args *string) {
+	if _, ok := QueueDict[message.GuildID]; ok {
+		if _, err := GetVoice(s, message); err != nil {
+			QueueDict[message.GuildID].MoveToQuiet(QueueDict[message.GuildID].Current_Pos)
+		} else {
+			s.ChannelMessageSend(message.ChannelID, "You are not connected to a voice channel, or there was an error.")
+		}
 	}
 }
 

@@ -478,26 +478,26 @@ func NowPlaying(s *discordgo.Session, message *discordgo.MessageCreate, args *st
 
 // Lyrics function, this function simply shows the lyrics of whatever song you gave it
 func Lyrics(s *discordgo.Session, message *discordgo.MessageCreate, args *string) {
-	if args != nil && strings.TrimSpace(*args) != "" {
-		song_lyrics, err := lyricsapi.GetByName(*args)
-		if err != nil {
-			log.Println(err)
-			s.ChannelMessageSend(message.ChannelID, "Could not get the lyrics for the given song.")
-			return
-		}
-		var lyrics_list []string
-		for i := 0; i < len(song_lyrics.Lyrics.Lines); i++ {
-			lyrics_list = append(lyrics_list, song_lyrics.Lyrics.Lines[i].Words)
-		}
-		embed_desc := strings.Join(lyrics_list, "\n")
-
-		embed_to_send := discordgo.MessageEmbed{
-			Title:       fmt.Sprintf("Lyrics for '%v'", *args),
-			Description: embed_desc,
-		}
-
-		s.ChannelMessageSendEmbed(message.ChannelID, &embed_to_send)
-	} else {
-		s.ChannelMessageSend(message.ChannelID, "You need to input a song to query.")
-	}
+	// if args != nil && strings.TrimSpace(*args) != "" {
+	// 	song_lyrics, err := lyricsapi.GetByName(*args)
+	// 	if err != nil {
+	// 		log.Println(err)
+	// 		s.ChannelMessageSend(message.ChannelID, "Could not get the lyrics for the given song.")
+	// 		return
+	// 	}
+	// 	var lyrics_list []string
+	// 	for i := 0; i < len(song_lyrics.Lyrics.Lines); i++ {
+	// 		lyrics_list = append(lyrics_list, song_lyrics.Lyrics.Lines[i].Words)
+	// 	}
+	// 	embed_desc := strings.Join(lyrics_list, "\n")
+	//
+	// 	embed_to_send := discordgo.MessageEmbed{
+	// 		Title:       fmt.Sprintf("Lyrics for '%v'", *args),
+	// 		Description: embed_desc,
+	// 	}
+	//
+	// 	s.ChannelMessageSendEmbed(message.ChannelID, &embed_to_send)
+	// } else {
+	// 	s.ChannelMessageSend(message.ChannelID, "You need to input a song to query.")
+	// }
 }

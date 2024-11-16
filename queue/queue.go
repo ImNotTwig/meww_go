@@ -85,7 +85,7 @@ func (q *Queue) Enqueue(song Song) {
 }
 
 func (q *Queue) Remove(index int) {
-	if index-1 == q.Current_Pos {
+	if index == q.Current_Pos {
 		q.Session.ChannelMessageSend(q.Message.ChannelID, "You cannot remove the currently playing song.")
 		return
 	}
